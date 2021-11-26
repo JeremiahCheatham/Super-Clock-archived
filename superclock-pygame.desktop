@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Super Clock - PyGame
+GenericName=A Binary Clock in PyGame
+Comment=A clock displayed in binary.
+Keywords=Clock;Time;Binary
+Exec=superclock-pygame
+Icon=/usr/share/superclock/images/superclock.png
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Utility

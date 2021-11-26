@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Super Clock - SDL
+GenericName=A Binary Clock in SDL
+Comment=A clock displayed in binary.
+Keywords=Clock;Time;Binary
+Exec=superclock
+Icon=/usr/share/superclock/images/superclock.png
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Utility
