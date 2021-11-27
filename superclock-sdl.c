@@ -283,6 +283,7 @@ bool create_texts(SDL_Texture **texts, SDL_Renderer *rend) {
         }
         SDL_FreeSurface(orig_surf);
     }
+    TTF_CloseFont(font);
     return true;
 }
 
