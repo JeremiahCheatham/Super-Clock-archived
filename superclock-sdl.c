@@ -14,8 +14,8 @@
 // Global constants variables.
 const int WIDTH  = 290;
 const int HEIGHT = 180;
-const char* TITLE = "Super Clock - SDL";
-const char* ICON = "images/superclock.png";
+const char TITLE[] = "Super Clock - SDL";
+const char ICON[] = "images/superclock.png";
 const int FPS = 60;
 const float FRAME_DELAY = 1000.0f / FPS;
 
@@ -48,8 +48,7 @@ int main(void)
     SDL_Renderer *rend = NULL;
     int digits[DIGITS_LENGTH];
     SDL_Rect rects[DIGITS_LENGTH];
-    SDL_Texture *texts[TEXTS_LENGTH];
-    for (int i = 0; i < TEXTS_LENGTH; i++) texts[i] = NULL;
+    SDL_Texture *texts[TEXTS_LENGTH] = {0};
 
     // Initialize SDL, create window and renderer.
     if (!setup_sdl(&win, &rend)) {
