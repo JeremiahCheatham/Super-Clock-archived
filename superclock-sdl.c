@@ -337,7 +337,7 @@ void fps_delay() {
     static float carry_delay = 0;
     static Uint32 last_time = 0;
 
-    Uint32 elapsed_time = SDL_GetTicks() - last_time;
+    int elapsed_time = SDL_GetTicks() - last_time;
     int current_delay = FRAME_DELAY - elapsed_time + carry_delay;
 
     if ( current_delay > 0 ) {
