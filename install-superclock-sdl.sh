@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-if [ 0 != $(id -u) ]; then
+if [ 0 != $UID ]; then
     echo
     echo "This script must be run as root with sudo."
     echo
@@ -27,7 +27,7 @@ mkdir -p /usr/share/superclock
 cp -r images /usr/share/superclock
 
 cp freesansbold.ttf /usr/share/superclock
-cp superclock /usr/bin
+cp superclock /usr/local/bin
 cp superclock-sdl /usr/share/superclock
 chmod +x /usr/bin/superclock
 cp superclock-sdl.desktop /usr/share/applications
