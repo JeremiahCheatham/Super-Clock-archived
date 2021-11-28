@@ -28,6 +28,6 @@ cp -r images /usr/share/superclock
 
 cp freesansbold.ttf /usr/share/superclock
 cp superclock /usr/local/bin
+chmod +x /usr/local/bin/superclock
 cp superclock-sdl /usr/share/superclock
-chmod +x /usr/bin/superclock
 cp superclock-sdl.desktop /usr/share/applications
