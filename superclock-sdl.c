@@ -327,7 +327,7 @@ void print_fps() {
     if (SDL_GetTicks() > next_time) {
         printf("%d\n", frame_count);
         frame_count = 0;
-        next_time = SDL_GetTicks() + 1000;
+        next_time += 1000;
     } else {
         frame_count++;
     }
