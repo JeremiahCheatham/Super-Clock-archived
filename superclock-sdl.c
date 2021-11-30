@@ -1,6 +1,7 @@
 // Included header files.
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <time.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -322,13 +323,30 @@ void convert_to_binary(int *digits, struct tm *timeinfo) {
 // Print FPS to standard output.
 void print_fps() {
     static Uint32 next_time = 1000;
-    static int frame_count = 0;
-    if (SDL_GetTicks() > next_time) {
-        printf("%d\n", frame_count);
-        frame_count = 0;
-        next_time += 1000;
+    static int frame_count = 1;
+    Uint32 current_time = SDL_GetTicks();
+    if (current_time >= next_time) {
+        if ((current_time - 1000) > next_time) {
+            if (current_time > (UINT32_MAX - 1000)) {
+                next_time = 1000;
+            } else {
+                next_time = current_time + 1000;
+            }
+        } else {
+            printf("%d\n", frame_count);
+            if (next_time > (UINT32_MAX - 1000)) {
+                next_time = 1000;
+            } else {
+                next_time += 1000;
+            }
+        }
+        frame_count = 1;
     } else {
-        frame_count++;
+        if (next_time > (UINT32_MAX - 1000)) {
+            next_time = 1000;
+        } else {
+            frame_count++;
+        }
     }
 }
 
@@ -337,19 +355,31 @@ void fps_delay() {
     static float carry_delay = 0;
     static Uint32 last_time = 0;
 
-    int elapsed_time = SDL_GetTicks() - last_time;
-    int current_delay = FRAME_DELAY - elapsed_time + carry_delay;
-
-    if ( current_delay > 0 ) {
-        SDL_Delay(current_delay);
+    Uint32 current_time = SDL_GetTicks();
+    // Checking for roll over
+    if (current_time >= last_time) {
+        Uint32 elapsed_time = current_time - last_time;
+        if ( ( FRAME_DELAY + carry_delay ) > elapsed_time ) {
+            unsigned int current_delay = FRAME_DELAY - elapsed_time + carry_delay;
+            SDL_Delay(current_delay);
+            current_time = SDL_GetTicks();
+            // Checking for roll over again.
+            if (current_time >= last_time) {
+                elapsed_time = current_time - last_time;
+                carry_delay = FRAME_DELAY - elapsed_time + carry_delay;
+            } else {
+                carry_delay = 0;
+            }
+        } else {
+            carry_delay = FRAME_DELAY - elapsed_time + carry_delay;
+        }
+    } else {
+        carry_delay = 0;
     }
-    Uint32 new_time = SDL_GetTicks();
-    elapsed_time = new_time - last_time;
-    carry_delay = FRAME_DELAY - elapsed_time + carry_delay;
-    if (carry_delay < -FRAME_DELAY) {
-        carry_delay = -FRAME_DELAY;
-    }
-    last_time = new_time;
+    if (carry_delay > FRAME_DELAY) carry_delay = FRAME_DELAY;
+    if (carry_delay < -FRAME_DELAY) carry_delay = -FRAME_DELAY;
+    //printf("%f\n", carry_delay);
+    last_time = current_time;
 }
 
 // Create a user callback event.
