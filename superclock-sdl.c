@@ -61,7 +61,7 @@ int main(void)
 
     // Create the 4 textures.
     if (!texts_populate(texts, rend)) {
-        my_exit(&win, &rend, texts, EXIT_FAILURE);
+        memory_release_exit(&win, &rend, texts, EXIT_FAILURE);
     }
 
     while (running) {
