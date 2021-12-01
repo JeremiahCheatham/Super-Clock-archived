@@ -1,5 +1,4 @@
 ![Screenshot](screenshots/compact1.png)
-
 # Super Clock
 A Binary Clock. Written 3 different ways. Python with PyGame Zero, Python with PyGame and C with SDL2.
 
