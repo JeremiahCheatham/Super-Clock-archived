@@ -28,15 +28,15 @@ int style = 1;
 
 // forward declaration of functions.
 bool sdl_setup(SDL_Window** win, SDL_Renderer** rend);
-void rects_populate_res(SDL_Rect *rects, int style, SDL_Window *win);
-bool texts_populate(SDL_Texture **texts, SDL_Renderer *rend);
+void rects_populate_res(SDL_Rect rects[], int style, SDL_Window *win);
+bool texts_populate(SDL_Texture *texts[], SDL_Renderer *rend);
 struct tm *get_time(struct tm *timeinfo);
 void time_in_title(struct tm *timeinfo, SDL_Window *win);
 void time_to_binary(int *digits, struct tm *timeinfo);
 void fps_print();
 void fps_delay();
 Uint32 timer_show_time(Uint32 interval, void* param);
-void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture **texts, int exit_status);
+void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *texts[], int exit_status);
 
 // Main function that launches the program.
 int main(void)
@@ -181,7 +181,7 @@ bool sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
 }
 
 // Create the layout of the Rects and set the Resolution.
-void rects_populate_res(SDL_Rect *rects, int style, SDL_Window *win) {
+void rects_populate_res(SDL_Rect rects[], int style, SDL_Window *win) {
     switch (style) {
         case 2:     // styles 2 and 5 have the same demintions.
         case 5: {
@@ -238,7 +238,7 @@ void rects_populate_res(SDL_Rect *rects, int style, SDL_Window *win) {
 }
 
 // Create the 4 textures.
-bool texts_populate(SDL_Texture **texts, SDL_Renderer *rend) {
+bool texts_populate(SDL_Texture *texts[], SDL_Renderer *rend) {
     TTF_Font *font = TTF_OpenFont("freesansbold.ttf", 35);
     if (!font) {
         printf("Error creating font: %s\n", TTF_GetError());
@@ -394,7 +394,7 @@ Uint32 timer_show_time(Uint32 interval, void* param) {
 }
 
 // Release memory and null pointers before exiting.
-void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture **texts, int exit_status) {
+void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *texts[], int exit_status) {
     for (int i = 0; i < TEXTS_LENGTH; i++) {
         SDL_DestroyTexture(texts[i]);
         texts[i] = NULL;
