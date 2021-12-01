@@ -1,3 +1,5 @@
+![Screenshot](screenshots/compact1.png)
+
 # Super Clock
 A Binary Clock. Written 3 different ways. Python with PyGame Zero, Python with PyGame and C with SDL2.
 
@@ -72,3 +74,9 @@ You can also run it from the terminal with this command.
 
     superclock
 
+![Screenshot](screenshots/compact3.png)
+![Screenshot](screenshots/vertical1.png)
+![Screenshot](screenshots/horizontal1.png)
+![Screenshot](screenshots/compact2.png)
+![Screenshot](screenshots/vertical2.png)
+![Screenshot](screenshots/horizontal2.png)
