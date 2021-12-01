@@ -79,27 +79,24 @@ int main(void)
                     // keyboard API for key pressed
                     switch (event.key.keysym.scancode) {
                         case SDL_SCANCODE_SPACE:
-                            if (show_time) {
+                            if (show_time)
                                 SDL_RemoveTimer(timer);
-                            } else {
+                            else
                                 show_time = true;
-                            }
                             timer = SDL_AddTimer(5000, timer_show_time, NULL);
                             break;
                         case SDL_SCANCODE_S:
-                            if (style < 6) {
+                            if (style < 6)
                                 style++;
-                            } else {
+                            else
                                 style = 1;
-                            }
                             rects_populate_res(rects, style, win);
                             break;
                         case SDL_SCANCODE_F:
-                            if (show_fps) {
+                            if (show_fps)
                                 show_fps = false;
-                            } else {
+                            else
                                 show_fps = true;
-                            }
                             break;
                         default:
                             break;
@@ -253,21 +250,18 @@ bool texts_populate(SDL_Texture *texts[], SDL_Renderer *rend) {
             return false;
         }
         SDL_Color color;
-        if (i == 1) {
+        if (i == 1)
             color = colors[1];
-        } else {
+        else
             color = colors[0];
-        }
-        SDL_FillRect(orig_surf, NULL, SDL_MapRGB(orig_surf->format, color.r,
-                                             color.g,
-                                             color.b));
+        SDL_FillRect(orig_surf, NULL, SDL_MapRGB(orig_surf->format,
+                                                 color.r, color.g, color.b));
         if (i > 1) {
             SDL_Surface *text_surf;
-            if (i == 2) {
+            if (i == 2)
                 text_surf = TTF_RenderText_Blended(font, "0", colors[1]);
-            } else {
+            else
                 text_surf = TTF_RenderText_Blended(font, "1", colors[1]);
-            }
             if (!text_surf) {
                 printf("Error creating a surface: %s\n", SDL_GetError());
                 return false;
@@ -326,26 +320,23 @@ void fps_print() {
     Uint32 current_time = SDL_GetTicks();
     if (current_time >= next_time) {
         if ((current_time - 1000) > next_time) {
-            if (current_time > (UINT32_MAX - 1000)) {
+            if (current_time > (UINT32_MAX - 1000))
                 next_time = 1000;
-            } else {
+            else
                 next_time = current_time + 1000;
-            }
         } else {
             printf("%d\n", frame_count);
-            if (next_time > (UINT32_MAX - 1000)) {
+            if (next_time > (UINT32_MAX - 1000))
                 next_time = 1000;
-            } else {
+            else
                 next_time += 1000;
-            }
         }
         frame_count = 1;
     } else {
-        if (next_time > (UINT32_MAX - 1000)) {
+        if (next_time > (UINT32_MAX - 1000))
             next_time = 1000;
-        } else {
+        else
             frame_count++;
-        }
     }
 }
 
