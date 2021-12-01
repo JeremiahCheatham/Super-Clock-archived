@@ -27,16 +27,16 @@ bool show_time = false;
 int style = 1;
 
 // forward declaration of functions.
-bool setup_sdl(SDL_Window** win, SDL_Renderer** rend);
-void populate_rects_res(SDL_Rect *rects, int style, SDL_Window *win);
-bool create_texts(SDL_Texture **texts, SDL_Renderer *rend);
+bool sdl_setup(SDL_Window** win, SDL_Renderer** rend);
+void rects_populate_res(SDL_Rect *rects, int style, SDL_Window *win);
+bool texts_populate(SDL_Texture **texts, SDL_Renderer *rend);
 struct tm *get_time(struct tm *timeinfo);
 void time_in_title(struct tm *timeinfo, SDL_Window *win);
-void convert_to_binary(int *digits, struct tm *timeinfo);
-void print_fps();
+void time_to_binary(int *digits, struct tm *timeinfo);
+void fps_print();
 void fps_delay();
-Uint32 show_time_timer(Uint32 interval, void* param);
-void my_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture **texts, int exit_status);
+Uint32 timer_show_time(Uint32 interval, void* param);
+void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture **texts, int exit_status);
 
 // Main function that launches the program.
 int main(void)
@@ -52,15 +52,15 @@ int main(void)
     SDL_Texture *texts[TEXTS_LENGTH] = {0};
 
     // Initialize SDL, create window and renderer.
-    if (!setup_sdl(&win, &rend)) {
-        my_exit(&win, &rend, texts, EXIT_FAILURE);
+    if (!sdl_setup(&win, &rend)) {
+        memory_release_exit(&win, &rend, texts, EXIT_FAILURE);
     }
 
     // Create all the Rects and set the Resolution.
-    populate_rects_res(rects, style, win);
+    rects_populate_res(rects, style, win);
 
     // Create the 4 textures.
-    if (!create_texts(texts, rend)) {
+    if (!texts_populate(texts, rend)) {
         my_exit(&win, &rend, texts, EXIT_FAILURE);
     }
 
@@ -86,7 +86,7 @@ int main(void)
                             } else {
                                 show_time = true;
                             }
-                            timer = SDL_AddTimer(5000, show_time_timer, NULL);
+                            timer = SDL_AddTimer(5000, timer_show_time, NULL);
                             break;
                         case SDL_SCANCODE_S:
                             if (style < 6) {
@@ -94,7 +94,7 @@ int main(void)
                             } else {
                                 style = 1;
                             }
-                            populate_rects_res(rects, style, win);
+                            rects_populate_res(rects, style, win);
                             break;
                         case SDL_SCANCODE_F:
                             if (show_fps) {
@@ -116,7 +116,7 @@ int main(void)
         if (show_time) time_in_title(timeinfo, win);
 
         // Convert Decemil time to Binary time.
-        convert_to_binary(digits, timeinfo);
+        time_to_binary(digits, timeinfo);
 
         // Clear the existing renderer.
         SDL_RenderClear(rend);
@@ -131,17 +131,17 @@ int main(void)
         SDL_RenderPresent(rend);
 
         // Print FPS to standard output.
-        if (show_fps) print_fps();
+        if (show_fps) fps_print();
 
         // Calculate delay needed for the FPS.
         fps_delay();
     }
     // Release memory and null pointers before exiting.
-    my_exit(&win, &rend, texts, EXIT_SUCCESS);
+    memory_release_exit(&win, &rend, texts, EXIT_SUCCESS);
 }
 
 // Initialize SDL, create window and renderer.
-bool setup_sdl(SDL_Window** win, SDL_Renderer** rend) {
+bool sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
     // Initialize SDL.
     if (SDL_Init(MY_SDL_FLAGS)) {
         printf("Error initializing SDL: %s\n", SDL_GetError());
@@ -181,7 +181,7 @@ bool setup_sdl(SDL_Window** win, SDL_Renderer** rend) {
 }
 
 // Create the layout of the Rects and set the Resolution.
-void populate_rects_res(SDL_Rect *rects, int style, SDL_Window *win) {
+void rects_populate_res(SDL_Rect *rects, int style, SDL_Window *win) {
     switch (style) {
         case 1:
         case 4:
@@ -239,7 +239,7 @@ void populate_rects_res(SDL_Rect *rects, int style, SDL_Window *win) {
 }
 
 // Create the 4 textures.
-bool create_texts(SDL_Texture **texts, SDL_Renderer *rend) {
+bool texts_populate(SDL_Texture **texts, SDL_Renderer *rend) {
     TTF_Font *font = TTF_OpenFont("freesansbold.ttf", 35);
     if (!font) {
         printf("Error creating font: %s\n", TTF_GetError());
@@ -302,7 +302,7 @@ void time_in_title(struct tm *timeinfo, SDL_Window *win) {
 }
 
 // Convert Decemil time to Binary time.
-void convert_to_binary(int *digits, struct tm *timeinfo) {
+void time_to_binary(int *digits, struct tm *timeinfo) {
     static time_t rawtime;
     time( &rawtime );
     timeinfo = localtime( &rawtime );
@@ -321,7 +321,7 @@ void convert_to_binary(int *digits, struct tm *timeinfo) {
 }
 
 // Print FPS to standard output.
-void print_fps() {
+void fps_print() {
     static Uint32 next_time = 1000;
     static int frame_count = 1;
     Uint32 current_time = SDL_GetTicks();
@@ -383,7 +383,7 @@ void fps_delay() {
 }
 
 // Create a user callback event.
-Uint32 show_time_timer(Uint32 interval, void* param) {
+Uint32 timer_show_time(Uint32 interval, void* param) {
     // Create a user event to call the game loop.
     SDL_Event event;
     event.type = SDL_USEREVENT;
@@ -395,7 +395,7 @@ Uint32 show_time_timer(Uint32 interval, void* param) {
 }
 
 // Release memory and null pointers before exiting.
-void my_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture **texts, int exit_status) {
+void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture **texts, int exit_status) {
     for (int i = 0; i < TEXTS_LENGTH; i++) {
         SDL_DestroyTexture(texts[i]);
         texts[i] = NULL;
