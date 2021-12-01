@@ -183,25 +183,7 @@ bool sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
 // Create the layout of the Rects and set the Resolution.
 void rects_populate_res(SDL_Rect *rects, int style, SDL_Window *win) {
     switch (style) {
-        case 1:
-        case 4:
-        default: {
-            int x[] = {5, 50, 105, 150, 205, 250};
-            int y[] = {5, 50, 95, 140};
-            int i = 0;
-            for (int ix = 0; ix < 6; ix++ ) {
-                for (int iy = 0; iy < 4; iy++ ) {
-                    rects[i].x = x[ix];
-                    rects[i].y = y[iy];
-                    rects[i].w = 35;
-                    rects[i].h = 35;
-                    i++;
-                }
-            }
-            SDL_SetWindowSize(win, 290, 180);
-            break;
-        }
-        case 2:
+        case 2:     // styles 2 and 5 have the same demintions.
         case 5: {
             int x[] = {5, 60, 115};
             int y[] = {5, 50, 95, 140, 185, 230, 275, 320};
@@ -218,7 +200,7 @@ void rects_populate_res(SDL_Rect *rects, int style, SDL_Window *win) {
             SDL_SetWindowSize(win, 155, 360);
             break;
         }
-        case 3:
+        case 3:     // styles 3 and 5 have the same demintions.
         case 6: {
             int y[] = {5, 60, 115};
             int x[] = {5, 50, 95, 140, 185, 230, 275, 320};
@@ -234,6 +216,23 @@ void rects_populate_res(SDL_Rect *rects, int style, SDL_Window *win) {
             }
             SDL_SetWindowSize(win, 360, 155);
             break;
+        }
+        case 1:     // styles 1 and 4 have the same demintions. This is the default.
+        case 4:
+        default: {
+            int x[] = {5, 50, 105, 150, 205, 250};
+            int y[] = {5, 50, 95, 140};
+            int i = 0;
+            for (int ix = 0; ix < 6; ix++ ) {
+                for (int iy = 0; iy < 4; iy++ ) {
+                    rects[i].x = x[ix];
+                    rects[i].y = y[iy];
+                    rects[i].w = 35;
+                    rects[i].h = 35;
+                    i++;
+                }
+            }
+            SDL_SetWindowSize(win, 290, 180);
         }
     }
 }
