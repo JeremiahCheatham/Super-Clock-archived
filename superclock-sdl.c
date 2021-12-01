@@ -52,17 +52,15 @@ int main(void)
     SDL_Texture *texts[TEXTS_LENGTH] = {0};
 
     // Initialize SDL, create window and renderer.
-    if (!sdl_setup(&win, &rend)) {
+    if (!sdl_setup(&win, &rend))
         memory_release_exit(&win, &rend, texts, EXIT_FAILURE);
-    }
 
     // Create all the Rects and set the Resolution.
     rects_populate_res(rects, style, win);
 
     // Create the 4 textures.
-    if (!texts_populate(texts, rend)) {
+    if (!texts_populate(texts, rend))
         memory_release_exit(&win, &rend, texts, EXIT_FAILURE);
-    }
 
     while (running) {
         // Check key events, key pressed or released.
@@ -113,7 +111,8 @@ int main(void)
         timeinfo = get_time(timeinfo);
 
         // Set the window title as the time.
-        if (show_time) time_in_title(timeinfo, win);
+        if (show_time)
+            time_in_title(timeinfo, win);
 
         // Convert Decemil time to Binary time.
         time_to_binary(digits, timeinfo);
@@ -131,7 +130,8 @@ int main(void)
         SDL_RenderPresent(rend);
 
         // Print FPS to standard output.
-        if (show_fps) fps_print();
+        if (show_fps)
+            fps_print();
 
         // Calculate delay needed for the FPS.
         fps_delay();
@@ -375,9 +375,10 @@ void fps_delay() {
     } else {
         carry_delay = 0;
     }
-    if (carry_delay > FRAME_DELAY) carry_delay = FRAME_DELAY;
-    if (carry_delay < -FRAME_DELAY) carry_delay = -FRAME_DELAY;
-    //printf("%f\n", carry_delay);
+    if (carry_delay > FRAME_DELAY)
+        carry_delay = FRAME_DELAY;
+    if (carry_delay < -FRAME_DELAY)
+        carry_delay = -FRAME_DELAY;
     last_time = current_time;
 }
 
