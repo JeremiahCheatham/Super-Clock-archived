@@ -290,7 +290,7 @@ struct tm *get_time(struct tm *timeinfo) {
 
 // Display the time in the Title.
 void time_in_title(struct tm timeinfo, SDL_Window *win) {
-    static char time_strg[9];
+    char time_strg[9];
     sprintf(time_strg, "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
     SDL_SetWindowTitle(win, time_strg);
 }
