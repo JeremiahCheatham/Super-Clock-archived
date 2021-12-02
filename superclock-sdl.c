@@ -8,7 +8,7 @@
 #include <SDL2/SDL_image.h>
 
 // Define directives for constants.
-#define MY_SDL_FLAGS SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_AUDIO
+#define MY_SDL_FLAGS (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_AUDIO)
 #define DIGITS_LENGTH 24
 #define TEXTS_LENGTH 4
 #define WIDTH  290
@@ -17,6 +17,7 @@
 #define ICON "images/superclock.png"
 #define FPS 60
 
+// Length of array macro.
 #define LEN(x) (sizeof(x)/sizeof(x[0]))
 
 // Global constants variables.
@@ -29,9 +30,9 @@ bool show_time = false;
 int style = 1;
 
 // forward declaration of functions.
-bool sdl_setup(SDL_Window** win, SDL_Renderer** rend);
-bool rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win);
-bool texts_populate(SDL_Texture *texts[], size_t textsc, SDL_Renderer *rend);
+int sdl_setup(SDL_Window** win, SDL_Renderer** rend);
+int rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win);
+int texts_populate(SDL_Texture *texts[], size_t textsc, SDL_Renderer *rend);
 struct tm *get_time(struct tm *tt_local);
 void time_in_title(struct tm timeinfo, SDL_Window *win);
 void time_to_binary(int *digits, struct tm timeinfo);
@@ -46,7 +47,7 @@ int main(void)
     struct tm *tt_local;
     SDL_Event event;
     SDL_TimerID timer;
-
+    int exit_status = 0;
     SDL_Window *win = NULL;
     SDL_Renderer *rend = NULL;
     int digits[DIGITS_LENGTH];
@@ -54,16 +55,19 @@ int main(void)
     SDL_Texture *texts[TEXTS_LENGTH] = {0};
 
     // Initialize SDL, create window and renderer.
-    if (!sdl_setup(&win, &rend))
-        memory_release_exit(&win, &rend, texts, LEN(texts), EXIT_FAILURE);
+    exit_status = sdl_setup(&win, &rend);
+    if (exit_status)
+        memory_release_exit(&win, &rend, texts, LEN(texts), exit_status);
 
     // Create all the Rects and set the Resolution.
-    if (!rects_populate_res(rects, LEN(rects), style, win))
-        memory_release_exit(&win, &rend, texts, LEN(texts), EXIT_FAILURE);
+    exit_status = rects_populate_res(rects, LEN(rects), style, win);
+    if (exit_status)
+        memory_release_exit(&win, &rend, texts, LEN(texts), exit_status);
 
     // Create the 4 textures.
-    if (!texts_populate(texts, LEN(texts), rend))
-        memory_release_exit(&win, &rend, texts, LEN(texts), EXIT_FAILURE);
+    exit_status = texts_populate(texts, LEN(texts), rend);
+    if (exit_status)
+        memory_release_exit(&win, &rend, texts, LEN(texts), exit_status);
 
     while (running) {
         // Check key events, key pressed or released.
@@ -93,7 +97,9 @@ int main(void)
                                 style++;
                             else
                                 style = 1;
-                            rects_populate_res(rects, LEN(rects), style, win);
+                            exit_status = rects_populate_res(rects, LEN(rects), style, win);
+                            if (exit_status)
+                                memory_release_exit(&win, &rend, texts, LEN(texts), exit_status);
                             break;
                         case SDL_SCANCODE_F:
                             if (show_fps)
@@ -121,7 +127,7 @@ int main(void)
         SDL_RenderClear(rend);
 
         // Draw the images to the renderer.
-        for (int i = 0; i < 24; i++) {
+        for (int i = 0; i < LEN(rects); i++) {
             int offset = (style < 4 ) ? 0: 2;
             SDL_RenderCopy(rend, texts[digits[i] + offset], NULL, &rects[i]);
         }
@@ -137,51 +143,41 @@ int main(void)
         fps_delay();
     }
     // Release memory and null pointers before exiting.
-    memory_release_exit(&win, &rend, texts, LEN(texts), EXIT_SUCCESS);
+    memory_release_exit(&win, &rend, texts, LEN(texts), 0);
 }
 
 // Initialize SDL, create window and renderer.
-bool sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
+int sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
     // Initialize SDL.
-    if (SDL_Init(MY_SDL_FLAGS)) {
-        fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
-        return false;
-    }
+    if (SDL_Init(MY_SDL_FLAGS))
+        return 1;
 
     // Initialize TTF
-    if(TTF_Init()) {
-        fprintf(stderr, "Error initializing TTF: %s\n", TTF_GetError());
-        return false;
-    }
+    if(TTF_Init())
+        return 2;
 
     // Created the SDL Window.
     *win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
-    if (!*win) {
-        fprintf(stderr, "Error creating window: %s\n", SDL_GetError());
-        return false;
-    }
+    if (!*win)
+        return 3;
 
     // Create the SDL Renderer.
     *rend = SDL_CreateRenderer(*win, -1, SDL_RENDERER_ACCELERATED);
-    if (!*rend) {
-        fprintf(stderr, "Error creating renderer: %s\n", SDL_GetError());
-        return false;
-    }
+    if (!*rend)
+        return 4;
 
     // load icon image as surface, set as window icon, then release surface.
     SDL_Surface *icon = IMG_Load(ICON);
     if (icon) {
         SDL_SetWindowIcon(*win, icon);
         SDL_FreeSurface(icon);
-    } else {
-        fprintf(stderr, "Error creating icon surface: %s\n", SDL_GetError());
-        return false;
-    }
-    return true;
+    } else
+        return 5;
+    return 0;
 }
 
 // Create the layout of the Rects and set the Resolution.
-bool rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win) {
+int rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win) {
     switch (style) {
         case 2:     // styles 2 and 5 have the same demintions.
         case 5: {
@@ -190,10 +186,8 @@ bool rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *
             int i = 0;
             for (int ix = 0; ix < LEN(x); ix++ ) {
                 for (int iy = 0; iy < LEN(y); iy++ ) {
-                    if (i >= rectsc) {
-                        fprintf(stderr, "Populating rects array went out of bounds!\n");
-                        return false;
-                    }
+                    if (i >= rectsc)
+                        return 6;
                     rects[i].x = x[ix];
                     rects[i].y = y[iy];
                     rects[i].w = 35;
@@ -211,10 +205,8 @@ bool rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *
             int i = 0;
             for (int iy = 0; iy < LEN(y); iy++ ) {
                 for (int ix = 0; ix < LEN(x); ix++ ) {
-                    if (i >= rectsc) {
-                        fprintf(stderr, "Populating rects array went out of bounds!\n");
-                        return false;
-                    }
+                    if (i >= rectsc)
+                        return 6;
                     rects[i].x = x[ix];
                     rects[i].y = y[iy];
                     rects[i].w = 35;
@@ -233,10 +225,8 @@ bool rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *
             int i = 0;
             for (int ix = 0; ix < LEN(x); ix++ ) {
                 for (int iy = 0; iy < LEN(y); iy++ ) {
-                    if (i >= rectsc) {
-                        fprintf(stderr, "Populating rects array went out of bounds!\n");
-                        return false;
-                    }
+                    if (i >= rectsc)
+                        return 6;
                     rects[i].x = x[ix];
                     rects[i].y = y[iy];
                     rects[i].w = 35;
@@ -247,24 +237,20 @@ bool rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *
             SDL_SetWindowSize(win, 290, 180);
         }
     }
-    return true;
+    return 0;
 }
 
 // Create the 4 textures.
-bool texts_populate(SDL_Texture *texts[], size_t textsc, SDL_Renderer *rend) {
+int texts_populate(SDL_Texture *texts[], size_t textsc, SDL_Renderer *rend) {
     TTF_Font *font = TTF_OpenFont("freesansbold.ttf", 35);
-    if (!font) {
-        fprintf(stderr, "Error creating font: %s\n", TTF_GetError());
-        return false;
-    }
+    if (!font)
+        return 7;
     SDL_Color colors[2] = {{20, 20, 20}, {223, 223, 223}};
     SDL_Rect off_rect = {8, 3, 35, 35};
     for (int i = 0; i < textsc; i++) {
         SDL_Surface *orig_surf = SDL_CreateRGBSurface(0,35,35,32,0,0,0,0);
-        if (!orig_surf) {
-            fprintf(stderr, "Error creating a surface: %s\n", SDL_GetError());
-            return false;
-        }
+        if (!orig_surf)
+            return 8;
         SDL_Color color;
         if (i == 1)
             color = colors[1];
@@ -278,22 +264,18 @@ bool texts_populate(SDL_Texture *texts[], size_t textsc, SDL_Renderer *rend) {
                 text_surf = TTF_RenderText_Blended(font, "0", colors[1]);
             else
                 text_surf = TTF_RenderText_Blended(font, "1", colors[1]);
-            if (!text_surf) {
-                fprintf(stderr, "Error creating a surface: %s\n", SDL_GetError());
-                return false;
-            }
+            if (!text_surf)
+                return 8;
             SDL_BlitSurface(text_surf, NULL, orig_surf, &off_rect);
             SDL_FreeSurface(text_surf);
         }
         texts[i] = SDL_CreateTextureFromSurface(rend, orig_surf);
-        if (!texts[i]) {
-            fprintf(stderr, "Error creating a texture: %s\n", SDL_GetError());
-            return false;
-        }
+        if (!texts[i])
+            return 9;
         SDL_FreeSurface(orig_surf);
     }
     TTF_CloseFont(font);
-    return true;
+    return 0;
 }
 
 // Return the current time.
@@ -400,6 +382,37 @@ Uint32 timer_show_time(Uint32 interval, void* param) {
 
 // Release memory and null pointers before exiting.
 void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *texts[], size_t textsc, int exit_status) {
+    switch (exit_status) {
+        case 1:
+            fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
+            break;
+        case 2:
+            fprintf(stderr, "Error initializing TTF: %s\n", TTF_GetError());
+            break;
+        case 3:
+            fprintf(stderr, "Error creating window: %s\n", SDL_GetError());
+            break;
+        case 4:
+            fprintf(stderr, "Error creating renderer: %s\n", SDL_GetError());
+            break;
+        case 5:
+            fprintf(stderr, "Error creating icon surface: %s\n", SDL_GetError());
+            break;
+        case 6:
+            fprintf(stderr, "Populating rects array went out of bounds!\n");
+            break;
+        case 7:
+            fprintf(stderr, "Error creating font: %s\n", TTF_GetError());
+            break;
+        case 8:
+            fprintf(stderr, "Error creating a surface: %s\n", SDL_GetError());
+            break;
+        case 9:
+            fprintf(stderr, "Error creating a texture: %s\n", SDL_GetError());
+        default:
+            break;
+    }
+
     for (int i = 0; i < textsc; i++) {
         SDL_DestroyTexture(texts[i]);
         texts[i] = NULL;
