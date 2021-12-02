@@ -82,6 +82,7 @@ int main(void)
                         show_time = false;
                         SDL_SetWindowTitle(win, TITLE);
                     }
+                    break;
                 case SDL_KEYDOWN:
                     // keyboard API for key pressed
                     switch (event.key.keysym.scancode) {
@@ -110,6 +111,8 @@ int main(void)
                         default:
                             break;
                     }
+                default:
+                    break;
             }
         }
 
