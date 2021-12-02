@@ -11,13 +11,15 @@
 #define MY_SDL_FLAGS SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_AUDIO
 #define DIGITS_LENGTH 24
 #define TEXTS_LENGTH 4
+#define WIDTH  290
+#define HEIGHT 180
+#define TITLE "Super Clock - SDL"
+#define ICON "images/superclock.png"
+#define FPS 60
+
+#define LEN(x) (sizeof(x)/sizeof(x[0]))
 
 // Global constants variables.
-const int WIDTH  = 290;
-const int HEIGHT = 180;
-const char TITLE[] = "Super Clock - SDL";
-const char ICON[] = "images/superclock.png";
-const int FPS = 60;
 const float FRAME_DELAY = 1000.0f / FPS;
 
 // Global variables.
@@ -28,15 +30,15 @@ int style = 1;
 
 // forward declaration of functions.
 bool sdl_setup(SDL_Window** win, SDL_Renderer** rend);
-void rects_populate_res(SDL_Rect rects[], int style, SDL_Window *win);
-bool texts_populate(SDL_Texture *texts[], SDL_Renderer *rend);
+void rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win);
+bool texts_populate(SDL_Texture *texts[], size_t textsc, SDL_Renderer *rend);
 struct tm *get_time(struct tm *timeinfo);
 void time_in_title(struct tm *timeinfo, SDL_Window *win);
 void time_to_binary(int *digits, struct tm *timeinfo);
 void fps_print();
 void fps_delay();
 Uint32 timer_show_time(Uint32 interval, void* param);
-void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *texts[], int exit_status);
+void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *texts[], size_t textsc, int exit_status);
 
 // Main function that launches the program.
 int main(void)
@@ -53,14 +55,14 @@ int main(void)
 
     // Initialize SDL, create window and renderer.
     if (!sdl_setup(&win, &rend))
-        memory_release_exit(&win, &rend, texts, EXIT_FAILURE);
+        memory_release_exit(&win, &rend, texts, LEN(texts), EXIT_FAILURE);
 
     // Create all the Rects and set the Resolution.
-    rects_populate_res(rects, style, win);
+    rects_populate_res(rects, LEN(rects), style, win);
 
     // Create the 4 textures.
-    if (!texts_populate(texts, rend))
-        memory_release_exit(&win, &rend, texts, EXIT_FAILURE);
+    if (!texts_populate(texts, LEN(texts), rend))
+        memory_release_exit(&win, &rend, texts, LEN(texts), EXIT_FAILURE);
 
     while (running) {
         // Check key events, key pressed or released.
@@ -90,7 +92,7 @@ int main(void)
                                 style++;
                             else
                                 style = 1;
-                            rects_populate_res(rects, style, win);
+                            rects_populate_res(rects, LEN(rects), style, win);
                             break;
                         case SDL_SCANCODE_F:
                             if (show_fps)
@@ -134,7 +136,7 @@ int main(void)
         fps_delay();
     }
     // Release memory and null pointers before exiting.
-    memory_release_exit(&win, &rend, texts, EXIT_SUCCESS);
+    memory_release_exit(&win, &rend, texts, LEN(texts), EXIT_SUCCESS);
 }
 
 // Initialize SDL, create window and renderer.
@@ -178,7 +180,7 @@ bool sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
 }
 
 // Create the layout of the Rects and set the Resolution.
-void rects_populate_res(SDL_Rect rects[], int style, SDL_Window *win) {
+void rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win) {
     switch (style) {
         case 2:     // styles 2 and 5 have the same demintions.
         case 5: {
@@ -192,6 +194,10 @@ void rects_populate_res(SDL_Rect rects[], int style, SDL_Window *win) {
                     rects[i].w = 35;
                     rects[i].h = 35;
                     i++;
+                    if (i >= rectsc) {
+                        fprintf(stderr, "Populating rects array went out of bounds!");
+                        memeory_release_exit();
+                    }
                 }
             }
             SDL_SetWindowSize(win, 155, 360);
@@ -209,6 +215,10 @@ void rects_populate_res(SDL_Rect rects[], int style, SDL_Window *win) {
                     rects[i].w = 35;
                     rects[i].h = 35;
                     i++;
+                    if (i >= rectsc) {
+                        fprintf(stderr, "Populating rects array went out of bounds!");
+                        memeory_release_exit();
+                    }
                 }
             }
             SDL_SetWindowSize(win, 360, 155);
@@ -227,6 +237,10 @@ void rects_populate_res(SDL_Rect rects[], int style, SDL_Window *win) {
                     rects[i].w = 35;
                     rects[i].h = 35;
                     i++;
+                    if (i >= rectsc) {
+                        fprintf(stderr, "Populating rects array went out of bounds!");
+                        memeory_release_exit();
+                    }
                 }
             }
             SDL_SetWindowSize(win, 290, 180);
@@ -235,7 +249,7 @@ void rects_populate_res(SDL_Rect rects[], int style, SDL_Window *win) {
 }
 
 // Create the 4 textures.
-bool texts_populate(SDL_Texture *texts[], SDL_Renderer *rend) {
+bool texts_populate(SDL_Texture *texts[], size_t textsc, SDL_Renderer *rend) {
     TTF_Font *font = TTF_OpenFont("freesansbold.ttf", 35);
     if (!font) {
         fprintf(stderr, "Error creating font: %s\n", TTF_GetError());
@@ -243,7 +257,7 @@ bool texts_populate(SDL_Texture *texts[], SDL_Renderer *rend) {
     }
     SDL_Color colors[2] = {{20, 20, 20}, {223, 223, 223}};
     SDL_Rect off_rect = {8, 3, 35, 35};
-    for (int i = 0; i < TEXTS_LENGTH; i++) {
+    for (int i = 0; i < textsc; i++) {
         SDL_Surface *orig_surf = SDL_CreateRGBSurface(0,35,35,32,0,0,0,0);
         if (!orig_surf) {
             fprintf(stderr, "Error creating a surface: %s\n", SDL_GetError());
@@ -386,8 +400,8 @@ Uint32 timer_show_time(Uint32 interval, void* param) {
 }
 
 // Release memory and null pointers before exiting.
-void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *texts[], int exit_status) {
-    for (int i = 0; i < TEXTS_LENGTH; i++) {
+void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *texts[], size_t textsc, int exit_status) {
+    for (int i = 0; i < textsc; i++) {
         SDL_DestroyTexture(texts[i]);
         texts[i] = NULL;
     }
