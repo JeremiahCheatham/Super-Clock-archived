@@ -141,27 +141,27 @@ int main(void)
 bool sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
     // Initialize SDL.
     if (SDL_Init(MY_SDL_FLAGS)) {
-        printf("Error initializing SDL: %s\n", SDL_GetError());
+        fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
         return false;
     }
 
     // Initialize TTF
     if(TTF_Init()) {
-        printf("Error initializing TTF: %s\n", TTF_GetError());
+        fprintf(stderr, "Error initializing TTF: %s\n", TTF_GetError());
         return false;
     }
 
     // Created the SDL Window.
     *win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
     if (!*win) {
-        printf("Error creating window: %s\n", SDL_GetError());
+        fprintf(stderr, "Error creating window: %s\n", SDL_GetError());
         return false;
     }
 
     // Create the SDL Renderer.
     *rend = SDL_CreateRenderer(*win, -1, SDL_RENDERER_ACCELERATED);
     if (!*rend) {
-        printf("Error creating renderer: %s\n", SDL_GetError());
+        fprintf(stderr, "Error creating renderer: %s\n", SDL_GetError());
         return false;
     }
 
@@ -171,7 +171,7 @@ bool sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
         SDL_SetWindowIcon(*win, icon);
         SDL_FreeSurface(icon);
     } else {
-        printf("Error creating icon surface: %s\n", SDL_GetError());
+        fprintf(stderr, "Error creating icon surface: %s\n", SDL_GetError());
         return false;
     }
     return true;
@@ -238,7 +238,7 @@ void rects_populate_res(SDL_Rect rects[], int style, SDL_Window *win) {
 bool texts_populate(SDL_Texture *texts[], SDL_Renderer *rend) {
     TTF_Font *font = TTF_OpenFont("freesansbold.ttf", 35);
     if (!font) {
-        printf("Error creating font: %s\n", TTF_GetError());
+        fprintf(stderr, "Error creating font: %s\n", TTF_GetError());
         return false;
     }
     SDL_Color colors[2] = {{20, 20, 20}, {223, 223, 223}};
@@ -246,7 +246,7 @@ bool texts_populate(SDL_Texture *texts[], SDL_Renderer *rend) {
     for (int i = 0; i < TEXTS_LENGTH; i++) {
         SDL_Surface *orig_surf = SDL_CreateRGBSurface(0,35,35,32,0,0,0,0);
         if (!orig_surf) {
-            printf("Error creating a surface: %s\n", SDL_GetError());
+            fprintf(stderr, "Error creating a surface: %s\n", SDL_GetError());
             return false;
         }
         SDL_Color color;
@@ -263,7 +263,7 @@ bool texts_populate(SDL_Texture *texts[], SDL_Renderer *rend) {
             else
                 text_surf = TTF_RenderText_Blended(font, "1", colors[1]);
             if (!text_surf) {
-                printf("Error creating a surface: %s\n", SDL_GetError());
+                fprintf(stderr, "Error creating a surface: %s\n", SDL_GetError());
                 return false;
             }
             SDL_BlitSurface(text_surf, NULL, orig_surf, &off_rect);
@@ -271,7 +271,7 @@ bool texts_populate(SDL_Texture *texts[], SDL_Renderer *rend) {
         }
         texts[i] = SDL_CreateTextureFromSurface(rend, orig_surf);
         if (!texts[i]) {
-            printf("Error creating a texture: %s\n", SDL_GetError());
+            fprintf(stderr, "Error creating a texture: %s\n", SDL_GetError());
             return false;
         }
         SDL_FreeSurface(orig_surf);
