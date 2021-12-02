@@ -32,9 +32,9 @@ int style = 1;
 bool sdl_setup(SDL_Window** win, SDL_Renderer** rend);
 bool rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win);
 bool texts_populate(SDL_Texture *texts[], size_t textsc, SDL_Renderer *rend);
-struct tm *get_time(struct tm *timeinfo);
-void time_in_title(struct tm *timeinfo, SDL_Window *win);
-void time_to_binary(int *digits, struct tm *timeinfo);
+struct tm *get_time(struct tm *tt_local);
+void time_in_title(struct tm timeinfo, SDL_Window *win);
+void time_to_binary(int *digits, struct tm timeinfo);
 void fps_print();
 void fps_delay();
 Uint32 timer_show_time(Uint32 interval, void* param);
@@ -43,7 +43,7 @@ void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *tex
 // Main function that launches the program.
 int main(void)
 {
-    struct tm *timeinfo;
+    struct tm *tt_local;
     SDL_Event event;
     SDL_TimerID timer;
 
@@ -108,14 +108,14 @@ int main(void)
         }
 
         // Get the current time each frame.
-        timeinfo = get_time(timeinfo);
+        tt_local = get_time(tt_local);
 
         // Set the window title as the time.
         if (show_time)
-            time_in_title(timeinfo, win);
+            time_in_title(*tt_local, win);
 
         // Convert Decemil time to Binary time.
-        time_to_binary(digits, timeinfo);
+        time_to_binary(digits, *tt_local);
 
         // Clear the existing renderer.
         SDL_RenderClear(rend);
@@ -298,34 +298,31 @@ bool texts_populate(SDL_Texture *texts[], size_t textsc, SDL_Renderer *rend) {
 
 // Return the current time.
 struct tm *get_time(struct tm *timeinfo) {
-    static time_t rawtime;
-    time( &rawtime );
-    return localtime( &rawtime );
+    time_t tt;
+    time(&tt);
+    return localtime(&tt);
 }
 
 // Display the time in the Title.
-void time_in_title(struct tm *timeinfo, SDL_Window *win) {
+void time_in_title(struct tm timeinfo, SDL_Window *win) {
     static char time_strg[9];
-    sprintf(time_strg, "%02d:%02d:%02d", timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+    sprintf(time_strg, "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
     SDL_SetWindowTitle(win, time_strg);
 }
 
 // Convert Decemil time to Binary time.
-void time_to_binary(int *digits, struct tm *timeinfo) {
-    static time_t rawtime;
-    time( &rawtime );
-    timeinfo = localtime( &rawtime );
+void time_to_binary(int *digits, struct tm timeinfo) {
     for (int i = 23; i > 15; i--) {
-        digits[i] = timeinfo->tm_sec % 2;
-        timeinfo->tm_sec /= 2;
+        digits[i] = timeinfo.tm_sec % 2;
+        timeinfo.tm_sec /= 2;
     }
     for (int i = 15; i > 7; i--) {
-        digits[i] = timeinfo->tm_min % 2;
-        timeinfo->tm_min /= 2;
+        digits[i] = timeinfo.tm_min % 2;
+        timeinfo.tm_min /= 2;
     }
     for (int i = 7; i >= 0; i--) {
-        digits[i] = timeinfo->tm_hour % 2;
-        timeinfo->tm_hour /= 2;
+        digits[i] = timeinfo.tm_hour % 2;
+        timeinfo.tm_hour /= 2;
     }
 }
 
