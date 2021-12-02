@@ -30,7 +30,7 @@ int style = 1;
 
 // forward declaration of functions.
 bool sdl_setup(SDL_Window** win, SDL_Renderer** rend);
-void rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win);
+bool rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win);
 bool texts_populate(SDL_Texture *texts[], size_t textsc, SDL_Renderer *rend);
 struct tm *get_time(struct tm *timeinfo);
 void time_in_title(struct tm *timeinfo, SDL_Window *win);
@@ -58,7 +58,8 @@ int main(void)
         memory_release_exit(&win, &rend, texts, LEN(texts), EXIT_FAILURE);
 
     // Create all the Rects and set the Resolution.
-    rects_populate_res(rects, LEN(rects), style, win);
+    if (!rects_populate_res(rects, LEN(rects), style, win))
+        memory_release_exit(&win, &rend, texts, LEN(texts), EXIT_FAILURE);
 
     // Create the 4 textures.
     if (!texts_populate(texts, LEN(texts), rend))
@@ -180,24 +181,24 @@ bool sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
 }
 
 // Create the layout of the Rects and set the Resolution.
-void rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win) {
+bool rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *win) {
     switch (style) {
         case 2:     // styles 2 and 5 have the same demintions.
         case 5: {
             int x[] = {5, 60, 115};
             int y[] = {5, 50, 95, 140, 185, 230, 275, 320};
             int i = 0;
-            for (int ix = 0; ix < 3; ix++ ) {
-                for (int iy = 0; iy < 8; iy++ ) {
+            for (int ix = 0; ix < LEN(x); ix++ ) {
+                for (int iy = 0; iy < LEN(y); iy++ ) {
+                    if (i >= rectsc) {
+                        fprintf(stderr, "Populating rects array went out of bounds!\n");
+                        return false;
+                    }
                     rects[i].x = x[ix];
                     rects[i].y = y[iy];
                     rects[i].w = 35;
                     rects[i].h = 35;
                     i++;
-                    if (i >= rectsc) {
-                        fprintf(stderr, "Populating rects array went out of bounds!");
-                        memeory_release_exit();
-                    }
                 }
             }
             SDL_SetWindowSize(win, 155, 360);
@@ -208,17 +209,17 @@ void rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *
             int y[] = {5, 60, 115};
             int x[] = {5, 50, 95, 140, 185, 230, 275, 320};
             int i = 0;
-            for (int iy = 0; iy < 3; iy++ ) {
-                for (int ix = 0; ix < 8; ix++ ) {
+            for (int iy = 0; iy < LEN(y); iy++ ) {
+                for (int ix = 0; ix < LEN(x); ix++ ) {
+                    if (i >= rectsc) {
+                        fprintf(stderr, "Populating rects array went out of bounds!\n");
+                        return false;
+                    }
                     rects[i].x = x[ix];
                     rects[i].y = y[iy];
                     rects[i].w = 35;
                     rects[i].h = 35;
                     i++;
-                    if (i >= rectsc) {
-                        fprintf(stderr, "Populating rects array went out of bounds!");
-                        memeory_release_exit();
-                    }
                 }
             }
             SDL_SetWindowSize(win, 360, 155);
@@ -230,22 +231,23 @@ void rects_populate_res(SDL_Rect rects[], size_t rectsc, int style, SDL_Window *
             int x[] = {5, 50, 105, 150, 205, 250};
             int y[] = {5, 50, 95, 140};
             int i = 0;
-            for (int ix = 0; ix < 6; ix++ ) {
-                for (int iy = 0; iy < 4; iy++ ) {
+            for (int ix = 0; ix < LEN(x); ix++ ) {
+                for (int iy = 0; iy < LEN(y); iy++ ) {
+                    if (i >= rectsc) {
+                        fprintf(stderr, "Populating rects array went out of bounds!\n");
+                        return false;
+                    }
                     rects[i].x = x[ix];
                     rects[i].y = y[iy];
                     rects[i].w = 35;
                     rects[i].h = 35;
                     i++;
-                    if (i >= rectsc) {
-                        fprintf(stderr, "Populating rects array went out of bounds!");
-                        memeory_release_exit();
-                    }
                 }
             }
             SDL_SetWindowSize(win, 290, 180);
         }
     }
+    return true;
 }
 
 // Create the 4 textures.
