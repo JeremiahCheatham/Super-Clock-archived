@@ -34,8 +34,8 @@ int sdl_setup(SDL_Window** win, SDL_Renderer** rend);
 int rectv_populate_res(SDL_Rect rectv[], size_t rectc, int style, SDL_Window *win);
 int textv_populate(SDL_Texture *textv[], size_t textc, SDL_Renderer *rend);
 struct tm *get_time(struct tm *tt_local);
-void time_in_title(struct tm timeinfo, SDL_Window *win);
-void time_to_binary(int *digits, struct tm timeinfo);
+void time_in_title(const struct tm *tt_local, SDL_Window *win);
+void time_to_binary(int *digits, struct tm tt_local);
 void fps_print();
 void fps_delay();
 Uint32 timer_show_time(Uint32 interval, void* param);
@@ -121,7 +121,7 @@ int main(void)
 
         // Set the window title as the time.
         if (show_time)
-            time_in_title(*tt_local, win);
+            time_in_title(tt_local, win);
 
         // Convert Decemil time to Binary time.
         time_to_binary(digits, *tt_local);
@@ -282,32 +282,32 @@ int textv_populate(SDL_Texture *textv[], size_t textc, SDL_Renderer *rend) {
 }
 
 // Return the current time.
-struct tm *get_time(struct tm *timeinfo) {
+struct tm *get_time(struct tm *tt_local) {
     time_t tt;
     time(&tt);
     return localtime(&tt);
 }
 
 // Display the time in the Title.
-void time_in_title(struct tm timeinfo, SDL_Window *win) {
+void time_in_title(const struct tm *tt_local, SDL_Window *win) {
     char time_strg[9];
-    sprintf(time_strg, "%02d:%02d:%02d", timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+    snprintf(time_strg, LEN(time_strg), "%02d:%02d:%02d", tt_local->tm_hour, tt_local->tm_min, tt_local->tm_sec);
     SDL_SetWindowTitle(win, time_strg);
 }
 
 // Convert Decemil time to Binary time.
-void time_to_binary(int *digits, struct tm timeinfo) {
+void time_to_binary(int *digits, struct tm tt_local) {
     for (int i = 23; i > 15; i--) {
-        digits[i] = timeinfo.tm_sec % 2;
-        timeinfo.tm_sec /= 2;
+        digits[i] = tt_local.tm_sec % 2;
+        tt_local.tm_sec /= 2;
     }
     for (int i = 15; i > 7; i--) {
-        digits[i] = timeinfo.tm_min % 2;
-        timeinfo.tm_min /= 2;
+        digits[i] = tt_local.tm_min % 2;
+        tt_local.tm_min /= 2;
     }
     for (int i = 7; i >= 0; i--) {
-        digits[i] = timeinfo.tm_hour % 2;
-        timeinfo.tm_hour /= 2;
+        digits[i] = tt_local.tm_hour % 2;
+        tt_local.tm_hour /= 2;
     }
 }
 
