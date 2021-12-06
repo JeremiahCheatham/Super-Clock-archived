@@ -9,37 +9,46 @@
 
 // Define directives for constants.
 #define MY_SDL_FLAGS (SDL_INIT_VIDEO|SDL_INIT_TIMER|SDL_INIT_AUDIO)
-#define DIGITS_LENGTH 24
-#define TEXTV_LENGTH 4
-#define WIDTH  290
-#define HEIGHT 180
 #define TITLE "Super Clock - SDL"
 #define ICON "images/superclock.png"
+#define DIGITV_LENGTH 24
+#define TEXTV_LENGTH 4
 #define FPS 60
 
 // Length of array macro.
 #define LEN(x) (sizeof(x)/sizeof(x[0]))
 
-// Global constants variables.
-const float FRAME_DELAY = 1000.0f / FPS;
-
-// Global variables.
-bool running = true;
-bool show_fps = false;
-bool show_time = false;
-int style = 1;
+struct superclock {
+    SDL_Window *win;
+    SDL_Renderer *rend;
+    int window_width;
+    int window_height;
+    unsigned short digitv[DIGITV_LENGTH];
+    unsigned short digitc;
+    SDL_Rect rectv[DIGITV_LENGTH];
+    unsigned short rectc;
+    SDL_Texture *textv[TEXTV_LENGTH];
+    unsigned short textc;
+    bool running;
+    float frame_delay;
+    bool show_fps;
+    bool show_time;
+    unsigned short style;
+    unsigned short exit_status;
+};
 
 // forward declaration of functions.
-int sdl_setup(SDL_Window** win, SDL_Renderer** rend);
-int rectv_populate_res(SDL_Rect rectv[], size_t rectc, int style, SDL_Window *win);
-int textv_populate(SDL_Texture *textv[], size_t textc, SDL_Renderer *rend);
+unsigned short arrays_length(struct superclock *sc);
+unsigned short sdl_setup(struct superclock *sc);
+unsigned short rectv_populate_res(struct superclock *sc);
+unsigned short textv_populate(struct superclock *sc);
 struct tm *get_time(struct tm *tt_local);
-void time_in_title(const struct tm *tt_local, SDL_Window *win);
-void time_to_binary(int *digits, struct tm tt_local);
+void time_in_title(const struct tm *tt_local, struct superclock *sc);
+void time_to_binary(struct tm tt_local, struct superclock *sc);
 void fps_print();
-void fps_delay();
+void fps_delay(struct superclock *sc);
 Uint32 timer_show_time(Uint32 interval, void* param);
-void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *textv[], size_t textc, int exit_status);
+void memory_release_exit(struct superclock *sc);
 
 // Main function that launches the program.
 int main(void)
@@ -47,66 +56,77 @@ int main(void)
     struct tm *tt_local;
     SDL_Event event;
     SDL_TimerID timer;
-    int exit_status = 0;
-    SDL_Window *win = NULL;
-    SDL_Renderer *rend = NULL;
-    int digits[DIGITS_LENGTH];
-    SDL_Rect rectv[DIGITS_LENGTH];
-    SDL_Texture *textv[TEXTV_LENGTH] = {0};
+
+    struct superclock sc = {
+        .win = NULL,
+        .rend = NULL,
+        .window_width = 290,
+        .window_height = 180,
+        .running = true,
+        .frame_delay = 1000.0f / FPS,
+        .show_fps = false,
+        .show_time = false,
+        .style = 1
+    };
 
     // Initialize SDL, create window and renderer.
-    exit_status = sdl_setup(&win, &rend);
-    if (exit_status)
-        memory_release_exit(&win, &rend, textv, LEN(textv), exit_status);
+    sc.exit_status = arrays_length(&sc);
+    if (sc.exit_status)
+        memory_release_exit(&sc);
+
+    // Initialize SDL, create window and renderer.
+    sc.exit_status = sdl_setup(&sc);
+    if (sc.exit_status)
+        memory_release_exit(&sc);
 
     // Create all the Rects and set the Resolution.
-    exit_status = rectv_populate_res(rectv, LEN(rectv), style, win);
-    if (exit_status)
-        memory_release_exit(&win, &rend, textv, LEN(textv), exit_status);
+    sc.exit_status = rectv_populate_res(&sc);
+    if (sc.exit_status)
+        memory_release_exit(&sc);
 
     // Create the 4 textures.
-    exit_status = textv_populate(textv, LEN(textv), rend);
-    if (exit_status)
-        memory_release_exit(&win, &rend, textv, LEN(textv), exit_status);
+    sc.exit_status = textv_populate(&sc);
+    if (sc.exit_status)
+        memory_release_exit(&sc);
 
-    while (running) {
+    while (sc.running) {
         // Check key events, key pressed or released.
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case SDL_QUIT:
                     // handling of close button
-                    running = false;
+                    sc.running = false;
                     break;
                 case SDL_USEREVENT:
                     if (event.user.code == 1) {
-                        show_time = false;
-                        SDL_SetWindowTitle(win, TITLE);
+                        sc.show_time = false;
+                        SDL_SetWindowTitle(sc.win, TITLE);
                     }
                     break;
                 case SDL_KEYDOWN:
                     // keyboard API for key pressed
                     switch (event.key.keysym.scancode) {
                         case SDL_SCANCODE_SPACE:
-                            if (show_time)
+                            if (sc.show_time)
                                 SDL_RemoveTimer(timer);
                             else
-                                show_time = true;
+                                sc.show_time = true;
                             timer = SDL_AddTimer(5000, timer_show_time, NULL);
                             break;
                         case SDL_SCANCODE_S:
-                            if (style < 6)
-                                style++;
+                            if (sc.style < 6)
+                                sc.style++;
                             else
-                                style = 1;
-                            exit_status = rectv_populate_res(rectv, LEN(rectv), style, win);
-                            if (exit_status)
-                                memory_release_exit(&win, &rend, textv, LEN(textv), exit_status);
+                                sc.style = 1;
+                            sc.exit_status = rectv_populate_res(&sc);
+                            if (sc.exit_status)
+                                memory_release_exit(&sc);
                             break;
                         case SDL_SCANCODE_F:
-                            if (show_fps)
-                                show_fps = false;
+                            if (sc.show_fps)
+                                sc.show_fps = false;
                             else
-                                show_fps = true;
+                                sc.show_fps = true;
                             break;
                         default:
                             break;
@@ -120,37 +140,51 @@ int main(void)
         tt_local = get_time(tt_local);
 
         // Set the window title as the time.
-        if (show_time)
-            time_in_title(tt_local, win);
+        if (sc.show_time)
+            time_in_title(tt_local, &sc);
 
         // Convert Decemil time to Binary time.
-        time_to_binary(digits, *tt_local);
+        time_to_binary(*tt_local, &sc);
 
         // Clear the existing renderer.
-        SDL_RenderClear(rend);
+        SDL_RenderClear(sc.rend);
 
         // Draw the images to the renderer.
-        for (int i = 0; i < LEN(rectv); i++) {
-            int offset = (style < 4 ) ? 0: 2;
-            SDL_RenderCopy(rend, textv[digits[i] + offset], NULL, &rectv[i]);
+        for (int i = 0; i < sc.digitc; i++) {
+            int offset = (sc.style < 4 ) ? 0: 2;
+            SDL_RenderCopy(sc.rend, sc.textv[sc.digitv[i] + offset], NULL, &sc.rectv[i]);
         }
 
         // Swap the back buffer to the front.
-        SDL_RenderPresent(rend);
+        SDL_RenderPresent(sc.rend);
 
         // Print FPS to standard output.
-        if (show_fps)
+        if (sc.show_fps)
             fps_print();
 
         // Calculate delay needed for the FPS.
-        fps_delay();
+        fps_delay(&sc);
     }
     // Release memory and null pointers before exiting.
-    memory_release_exit(&win, &rend, textv, LEN(textv), 0);
+    memory_release_exit(&sc);
 }
 
+unsigned short arrays_length(struct superclock *sc) {
+    sc->digitc = LEN(sc->digitv);
+    sc->rectc = LEN(sc->rectv);
+    sc->textc = LEN(sc->textv);
+    if (sc->digitc != DIGITV_LENGTH)
+        return 10;
+    if (sc->rectc != DIGITV_LENGTH)
+        return 10;
+    if (sc->textc != TEXTV_LENGTH)
+        return 10;
+    return 0;
+}
+
+
 // Initialize SDL, create window and renderer.
-int sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
+unsigned short sdl_setup(struct superclock *sc) {
     // Initialize SDL.
     if (SDL_Init(MY_SDL_FLAGS))
         return 1;
@@ -160,19 +194,19 @@ int sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
         return 2;
 
     // Created the SDL Window.
-    *win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, WIDTH, HEIGHT, 0);
-    if (!*win)
+    sc->win = SDL_CreateWindow(TITLE, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, sc->window_width, sc->window_height, 0);
+    if (!sc->win)
         return 3;
 
     // Create the SDL Renderer.
-    *rend = SDL_CreateRenderer(*win, -1, SDL_RENDERER_ACCELERATED);
-    if (!*rend)
+    sc->rend = SDL_CreateRenderer(sc->win, -1, SDL_RENDERER_ACCELERATED);
+    if (!sc->rend)
         return 4;
 
     // load icon image as surface, set as window icon, then release surface.
     SDL_Surface *icon = IMG_Load(ICON);
     if (icon) {
-        SDL_SetWindowIcon(*win, icon);
+        SDL_SetWindowIcon(sc->win, icon);
         SDL_FreeSurface(icon);
     } else
         return 5;
@@ -180,8 +214,8 @@ int sdl_setup(SDL_Window** win, SDL_Renderer** rend) {
 }
 
 // Create the layout of the Rects and set the Resolution.
-int rectv_populate_res(SDL_Rect rectv[], size_t rectc, int style, SDL_Window *win) {
-    switch (style) {
+unsigned short rectv_populate_res(struct superclock *sc) {
+    switch (sc->style) {
         case 2:     // styles 2 and 5 have the same demintions.
         case 5: {
             int x[] = {5, 60, 115};
@@ -189,16 +223,16 @@ int rectv_populate_res(SDL_Rect rectv[], size_t rectc, int style, SDL_Window *wi
             int i = 0;
             for (int ix = 0; ix < LEN(x); ix++ ) {
                 for (int iy = 0; iy < LEN(y); iy++ ) {
-                    if (i >= rectc)
+                    if (i >= sc->rectc)
                         return 6;
-                    rectv[i].x = x[ix];
-                    rectv[i].y = y[iy];
-                    rectv[i].w = 35;
-                    rectv[i].h = 35;
+                    sc->rectv[i].x = x[ix];
+                    sc->rectv[i].y = y[iy];
+                    sc->rectv[i].w = 35;
+                    sc->rectv[i].h = 35;
                     i++;
                 }
             }
-            SDL_SetWindowSize(win, 155, 360);
+            SDL_SetWindowSize(sc->win, 155, 360);
             break;
         }
         case 3:     // styles 3 and 5 have the same demintions.
@@ -208,16 +242,16 @@ int rectv_populate_res(SDL_Rect rectv[], size_t rectc, int style, SDL_Window *wi
             int i = 0;
             for (int iy = 0; iy < LEN(y); iy++ ) {
                 for (int ix = 0; ix < LEN(x); ix++ ) {
-                    if (i >= rectc)
+                    if (i >= sc->rectc)
                         return 6;
-                    rectv[i].x = x[ix];
-                    rectv[i].y = y[iy];
-                    rectv[i].w = 35;
-                    rectv[i].h = 35;
+                    sc->rectv[i].x = x[ix];
+                    sc->rectv[i].y = y[iy];
+                    sc->rectv[i].w = 35;
+                    sc->rectv[i].h = 35;
                     i++;
                 }
             }
-            SDL_SetWindowSize(win, 360, 155);
+            SDL_SetWindowSize(sc->win, 360, 155);
             break;
         }
         case 1:     // styles 1 and 4 have the same demintions. This is the default.
@@ -228,29 +262,29 @@ int rectv_populate_res(SDL_Rect rectv[], size_t rectc, int style, SDL_Window *wi
             int i = 0;
             for (int ix = 0; ix < LEN(x); ix++ ) {
                 for (int iy = 0; iy < LEN(y); iy++ ) {
-                    if (i >= rectc)
+                    if (i >= sc->rectc)
                         return 6;
-                    rectv[i].x = x[ix];
-                    rectv[i].y = y[iy];
-                    rectv[i].w = 35;
-                    rectv[i].h = 35;
+                    sc->rectv[i].x = x[ix];
+                    sc->rectv[i].y = y[iy];
+                    sc->rectv[i].w = 35;
+                    sc->rectv[i].h = 35;
                     i++;
                 }
             }
-            SDL_SetWindowSize(win, 290, 180);
+            SDL_SetWindowSize(sc->win, 290, 180);
         }
     }
     return 0;
 }
 
 // Create the 4 textures.
-int textv_populate(SDL_Texture *textv[], size_t textc, SDL_Renderer *rend) {
+unsigned short textv_populate(struct superclock *sc) {
     TTF_Font *font = TTF_OpenFont("freesansbold.ttf", 35);
     if (!font)
         return 7;
     SDL_Color colors[2] = {{20, 20, 20}, {223, 223, 223}};
     SDL_Rect off_rect = {8, 3, 35, 35};
-    for (int i = 0; i < textc; i++) {
+    for (int i = 0; i < sc->textc; i++) {
         SDL_Surface *orig_surf = SDL_CreateRGBSurface(0,35,35,32,0,0,0,0);
         if (!orig_surf)
             return 8;
@@ -272,8 +306,8 @@ int textv_populate(SDL_Texture *textv[], size_t textc, SDL_Renderer *rend) {
             SDL_BlitSurface(text_surf, NULL, orig_surf, &off_rect);
             SDL_FreeSurface(text_surf);
         }
-        textv[i] = SDL_CreateTextureFromSurface(rend, orig_surf);
-        if (!textv[i])
+        sc->textv[i] = SDL_CreateTextureFromSurface(sc->rend, orig_surf);
+        if (!sc->textv[i])
             return 9;
         SDL_FreeSurface(orig_surf);
     }
@@ -289,24 +323,24 @@ struct tm *get_time(struct tm *tt_local) {
 }
 
 // Display the time in the Title.
-void time_in_title(const struct tm *tt_local, SDL_Window *win) {
+void time_in_title(const struct tm *tt_local, struct superclock *sc) {
     char time_strg[9];
     snprintf(time_strg, LEN(time_strg), "%02d:%02d:%02d", tt_local->tm_hour, tt_local->tm_min, tt_local->tm_sec);
-    SDL_SetWindowTitle(win, time_strg);
+    SDL_SetWindowTitle(sc->win, time_strg);
 }
 
 // Convert Decemil time to Binary time.
-void time_to_binary(int *digits, struct tm tt_local) {
+void time_to_binary(struct tm tt_local, struct superclock *sc) {
     for (int i = 23; i > 15; i--) {
-        digits[i] = tt_local.tm_sec % 2;
+        sc->digitv[i] = tt_local.tm_sec % 2;
         tt_local.tm_sec /= 2;
     }
     for (int i = 15; i > 7; i--) {
-        digits[i] = tt_local.tm_min % 2;
+        sc->digitv[i] = tt_local.tm_min % 2;
         tt_local.tm_min /= 2;
     }
     for (int i = 7; i >= 0; i--) {
-        digits[i] = tt_local.tm_hour % 2;
+        sc->digitv[i] = tt_local.tm_hour % 2;
         tt_local.tm_hour /= 2;
     }
 }
@@ -339,7 +373,7 @@ void fps_print() {
 }
 
 // Calculate delay needed for the FPS.
-void fps_delay() {
+void fps_delay(struct superclock *sc) {
     static float carry_delay = 0;
     static Uint32 last_time = 0;
 
@@ -347,27 +381,27 @@ void fps_delay() {
     // Checking for roll over
     if (current_time >= last_time) {
         Uint32 elapsed_time = current_time - last_time;
-        if ( ( FRAME_DELAY + carry_delay ) > elapsed_time ) {
-            unsigned int current_delay = FRAME_DELAY - elapsed_time + carry_delay;
+        if ((sc->frame_delay + carry_delay) > elapsed_time) {
+            unsigned int current_delay = sc->frame_delay - elapsed_time + carry_delay;
             SDL_Delay(current_delay);
             current_time = SDL_GetTicks();
             // Checking for roll over again.
             if (current_time >= last_time) {
                 elapsed_time = current_time - last_time;
-                carry_delay = FRAME_DELAY - elapsed_time + carry_delay;
+                carry_delay = sc->frame_delay - elapsed_time + carry_delay;
             } else {
                 carry_delay = 0;
             }
         } else {
-            carry_delay = FRAME_DELAY - elapsed_time + carry_delay;
+            carry_delay = sc->frame_delay - elapsed_time + carry_delay;
         }
     } else {
         carry_delay = 0;
     }
-    if (carry_delay > FRAME_DELAY)
-        carry_delay = FRAME_DELAY;
-    if (carry_delay < -FRAME_DELAY)
-        carry_delay = -FRAME_DELAY;
+    if (carry_delay > sc->frame_delay)
+        carry_delay = sc->frame_delay;
+    if (carry_delay < -(sc->frame_delay))
+        carry_delay = -(sc->frame_delay);
     last_time = current_time;
 }
 
@@ -384,8 +418,8 @@ Uint32 timer_show_time(Uint32 interval, void* param) {
 }
 
 // Release memory and null pointers before exiting.
-void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *textv[], size_t textc, int exit_status) {
-    switch (exit_status) {
+void memory_release_exit(struct superclock *sc) {
+    switch (sc->exit_status) {
         case 1:
             fprintf(stderr, "Error initializing SDL: %s\n", SDL_GetError());
             break;
@@ -412,18 +446,20 @@ void memory_release_exit(SDL_Window** win, SDL_Renderer** rend, SDL_Texture *tex
             break;
         case 9:
             fprintf(stderr, "Error creating a texture: %s\n", SDL_GetError());
+        case 10:
+            fprintf(stderr, "Error an array was not the expected length:\n");
         default:
             break;
     }
 
-    for (int i = 0; i < textc; i++) {
-        SDL_DestroyTexture(textv[i]);
-        textv[i] = NULL;
+    for (int i = 0; i < sc->textc; i++) {
+        SDL_DestroyTexture(sc->textv[i]);
+        sc->textv[i] = NULL;
     }
-    SDL_DestroyRenderer(*rend);
-    *rend = NULL;
-    SDL_DestroyWindow(*win);
-    *win = NULL;
+    SDL_DestroyRenderer(sc->rend);
+    sc->rend = NULL;
+    SDL_DestroyWindow(sc->win);
+    sc->win = NULL;
     SDL_Quit();
-    exit(exit_status);
+    exit(sc->exit_status);
 }
