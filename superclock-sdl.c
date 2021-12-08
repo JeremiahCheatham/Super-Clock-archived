@@ -13,7 +13,7 @@
 #define ICON "images/superclock.png"
 #define DIGITV_LENGTH 24
 #define TEXTV_LENGTH 4
-#define FPS 60
+#define FPS 30
 
 // Length of array macro.
 #define LEN(x) (sizeof(x)/sizeof(x[0]))
@@ -23,10 +23,11 @@ struct superclock {
     SDL_Renderer *rend;
     int window_width;
     int window_height;
-    unsigned short digitv[DIGITV_LENGTH];
+    struct digitv {
+        unsigned short digit;
+        SDL_Rect rect;
+    } digitv[DIGITV_LENGTH];
     unsigned short digitc;
-    SDL_Rect rectv[DIGITV_LENGTH];
-    unsigned short rectc;
     SDL_Texture *textv[TEXTV_LENGTH];
     unsigned short textc;
     bool running;
@@ -34,6 +35,7 @@ struct superclock {
     bool show_fps;
     bool show_time;
     unsigned short style;
+    unsigned short offset;
     unsigned short exit_status;
 };
 
@@ -66,10 +68,11 @@ int main(void)
         .frame_delay = 1000.0f / FPS,
         .show_fps = false,
         .show_time = false,
-        .style = 1
+        .style = 1,
+        .offset = 0
     };
 
-    // Initialize SDL, create window and renderer.
+    // Make sure arrays were created to the correct length.
     sc.exit_status = arrays_length(&sc);
     if (sc.exit_status)
         memory_release_exit(&sc);
@@ -118,6 +121,7 @@ int main(void)
                                 sc.style++;
                             else
                                 sc.style = 1;
+                            sc.offset = (sc.style < 4 ) ? 0: 2;
                             sc.exit_status = rectv_populate_res(&sc);
                             if (sc.exit_status)
                                 memory_release_exit(&sc);
@@ -151,8 +155,7 @@ int main(void)
 
         // Draw the images to the renderer.
         for (int i = 0; i < sc.digitc; i++) {
-            int offset = (sc.style < 4 ) ? 0: 2;
-            SDL_RenderCopy(sc.rend, sc.textv[sc.digitv[i] + offset], NULL, &sc.rectv[i]);
+            SDL_RenderCopy(sc.rend, sc.textv[sc.digitv[i].digit + sc.offset], NULL, &sc.digitv[i].rect);
         }
 
         // Swap the back buffer to the front.
@@ -169,13 +172,11 @@ int main(void)
     memory_release_exit(&sc);
 }
 
+// Make sure arrays were created to the correct length.
 unsigned short arrays_length(struct superclock *sc) {
     sc->digitc = LEN(sc->digitv);
-    sc->rectc = LEN(sc->rectv);
     sc->textc = LEN(sc->textv);
     if (sc->digitc != DIGITV_LENGTH)
-        return 10;
-    if (sc->rectc != DIGITV_LENGTH)
         return 10;
     if (sc->textc != TEXTV_LENGTH)
         return 10;
@@ -223,12 +224,12 @@ unsigned short rectv_populate_res(struct superclock *sc) {
             int i = 0;
             for (int ix = 0; ix < LEN(x); ix++ ) {
                 for (int iy = 0; iy < LEN(y); iy++ ) {
-                    if (i >= sc->rectc)
+                    if (i >= sc->digitc)
                         return 6;
-                    sc->rectv[i].x = x[ix];
-                    sc->rectv[i].y = y[iy];
-                    sc->rectv[i].w = 35;
-                    sc->rectv[i].h = 35;
+                    sc->digitv[i].rect.x = x[ix];
+                    sc->digitv[i].rect.y = y[iy];
+                    sc->digitv[i].rect.w = 35;
+                    sc->digitv[i].rect.h = 35;
                     i++;
                 }
             }
@@ -242,12 +243,12 @@ unsigned short rectv_populate_res(struct superclock *sc) {
             int i = 0;
             for (int iy = 0; iy < LEN(y); iy++ ) {
                 for (int ix = 0; ix < LEN(x); ix++ ) {
-                    if (i >= sc->rectc)
+                    if (i >= sc->digitc)
                         return 6;
-                    sc->rectv[i].x = x[ix];
-                    sc->rectv[i].y = y[iy];
-                    sc->rectv[i].w = 35;
-                    sc->rectv[i].h = 35;
+                    sc->digitv[i].rect.x = x[ix];
+                    sc->digitv[i].rect.y = y[iy];
+                    sc->digitv[i].rect.w = 35;
+                    sc->digitv[i].rect.h = 35;
                     i++;
                 }
             }
@@ -262,12 +263,12 @@ unsigned short rectv_populate_res(struct superclock *sc) {
             int i = 0;
             for (int ix = 0; ix < LEN(x); ix++ ) {
                 for (int iy = 0; iy < LEN(y); iy++ ) {
-                    if (i >= sc->rectc)
+                    if (i >= sc->digitc)
                         return 6;
-                    sc->rectv[i].x = x[ix];
-                    sc->rectv[i].y = y[iy];
-                    sc->rectv[i].w = 35;
-                    sc->rectv[i].h = 35;
+                    sc->digitv[i].rect.x = x[ix];
+                    sc->digitv[i].rect.y = y[iy];
+                    sc->digitv[i].rect.w = 35;
+                    sc->digitv[i].rect.h = 35;
                     i++;
                 }
             }
@@ -332,15 +333,15 @@ void time_in_title(const struct tm *tt_local, struct superclock *sc) {
 // Convert Decemil time to Binary time.
 void time_to_binary(struct tm tt_local, struct superclock *sc) {
     for (int i = 23; i > 15; i--) {
-        sc->digitv[i] = tt_local.tm_sec % 2;
+        sc->digitv[i].digit = tt_local.tm_sec % 2;
         tt_local.tm_sec /= 2;
     }
     for (int i = 15; i > 7; i--) {
-        sc->digitv[i] = tt_local.tm_min % 2;
+        sc->digitv[i].digit = tt_local.tm_min % 2;
         tt_local.tm_min /= 2;
     }
     for (int i = 7; i >= 0; i--) {
-        sc->digitv[i] = tt_local.tm_hour % 2;
+        sc->digitv[i].digit = tt_local.tm_hour % 2;
         tt_local.tm_hour /= 2;
     }
 }
