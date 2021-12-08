@@ -44,12 +44,12 @@ unsigned short arrays_length(struct superclock *sc);
 unsigned short sdl_setup(struct superclock *sc);
 unsigned short rectv_populate_res(struct superclock *sc);
 unsigned short textv_populate(struct superclock *sc);
-struct tm *get_time(struct tm *tt_local);
+struct tm *get_time();
 void time_in_title(const struct tm *tt_local, struct superclock *sc);
 void time_to_binary(struct tm tt_local, struct superclock *sc);
 void fps_print();
 void fps_delay(struct superclock *sc);
-Uint32 timer_show_time(Uint32 interval, void* param);
+Uint32 timer_show_time();
 void memory_release_exit(struct superclock *sc);
 
 // Main function that launches the program.
@@ -141,7 +141,7 @@ int main(void)
         }
 
         // Get the current time each frame.
-        tt_local = get_time(tt_local);
+        tt_local = get_time();
 
         // Set the window title as the time.
         if (sc.show_time)
@@ -219,11 +219,11 @@ unsigned short rectv_populate_res(struct superclock *sc) {
     switch (sc->style) {
         case 2:     // styles 2 and 5 have the same demintions.
         case 5: {
-            int x[] = {5, 60, 115};
-            int y[] = {5, 50, 95, 140, 185, 230, 275, 320};
-            int i = 0;
-            for (int ix = 0; ix < LEN(x); ix++ ) {
-                for (int iy = 0; iy < LEN(y); iy++ ) {
+            unsigned short x[] = {5, 60, 115};
+            unsigned short y[] = {5, 50, 95, 140, 185, 230, 275, 320};
+            unsigned short i = 0;
+            for (unsigned short ix = 0; ix < LEN(x); ix++ ) {
+                for (unsigned short iy = 0; iy < LEN(y); iy++ ) {
                     if (i >= sc->digitc)
                         return 6;
                     sc->digitv[i].rect.x = x[ix];
@@ -238,11 +238,11 @@ unsigned short rectv_populate_res(struct superclock *sc) {
         }
         case 3:     // styles 3 and 5 have the same demintions.
         case 6: {
-            int y[] = {5, 60, 115};
-            int x[] = {5, 50, 95, 140, 185, 230, 275, 320};
-            int i = 0;
-            for (int iy = 0; iy < LEN(y); iy++ ) {
-                for (int ix = 0; ix < LEN(x); ix++ ) {
+            unsigned short y[] = {5, 60, 115};
+            unsigned short x[] = {5, 50, 95, 140, 185, 230, 275, 320};
+            unsigned short i = 0;
+            for (unsigned short iy = 0; iy < LEN(y); iy++ ) {
+                for (unsigned short ix = 0; ix < LEN(x); ix++ ) {
                     if (i >= sc->digitc)
                         return 6;
                     sc->digitv[i].rect.x = x[ix];
@@ -258,11 +258,11 @@ unsigned short rectv_populate_res(struct superclock *sc) {
         case 1:     // styles 1 and 4 have the same demintions. This is the default.
         case 4:
         default: {
-            int x[] = {5, 50, 105, 150, 205, 250};
-            int y[] = {5, 50, 95, 140};
-            int i = 0;
-            for (int ix = 0; ix < LEN(x); ix++ ) {
-                for (int iy = 0; iy < LEN(y); iy++ ) {
+            unsigned short x[] = {5, 50, 105, 150, 205, 250};
+            unsigned short y[] = {5, 50, 95, 140};
+            unsigned short i = 0;
+            for (unsigned short ix = 0; ix < LEN(x); ix++ ) {
+                for (unsigned short iy = 0; iy < LEN(y); iy++ ) {
                     if (i >= sc->digitc)
                         return 6;
                     sc->digitv[i].rect.x = x[ix];
@@ -283,7 +283,7 @@ unsigned short textv_populate(struct superclock *sc) {
     TTF_Font *font = TTF_OpenFont("freesansbold.ttf", 35);
     if (!font)
         return 7;
-    SDL_Color colors[2] = {{20, 20, 20}, {223, 223, 223}};
+    SDL_Color colors[2] = {{20, 20, 20, 255}, {223, 223, 223, 255}};
     SDL_Rect off_rect = {8, 3, 35, 35};
     for (int i = 0; i < sc->textc; i++) {
         SDL_Surface *orig_surf = SDL_CreateRGBSurface(0,35,35,32,0,0,0,0);
@@ -317,7 +317,7 @@ unsigned short textv_populate(struct superclock *sc) {
 }
 
 // Return the current time.
-struct tm *get_time(struct tm *tt_local) {
+struct tm *get_time() {
     time_t tt;
     time(&tt);
     return localtime(&tt);
@@ -407,7 +407,7 @@ void fps_delay(struct superclock *sc) {
 }
 
 // Create a user callback event.
-Uint32 timer_show_time(Uint32 interval, void* param) {
+Uint32 timer_show_time() {
     // Create a user event to call the game loop.
     SDL_Event event;
     event.type = SDL_USEREVENT;
@@ -447,8 +447,10 @@ void memory_release_exit(struct superclock *sc) {
             break;
         case 9:
             fprintf(stderr, "Error creating a texture: %s\n", SDL_GetError());
+            break;
         case 10:
             fprintf(stderr, "Error an array was not the expected length:\n");
+            break;
         default:
             break;
     }
